@@ -1,0 +1,210 @@
+1° Etapa - Desvendando metodo Get e Post
+
+1 - Criar um arquivo para realizar a validação do E-mail e da senha do usuário.
+2 - Criar um action="Arquivo_de_validação" para que http dispare um 'sinal' para o apache fazendo com que aja um interação entre eles.
+3 - Criar um "name = email // name = senha" no imput para que os valores email e senha sejam passados separadamentes.
+------------------------------------------------------------------------------------------------------------------------------------------------
+Obs: * Como não definimos o 'Method' de envio do html, automaticamente o html usa o Get, que envia os valores atravez da url.		        |
+     * Para verificar se os dados enviados no metodo get estão corretos, utilizando um $_GET[] iremos analizar os dados separados em um array.  |
+																		|
+	print_r($_GET);																|
+    	echo $_GET['email'];															|
+    	echo $_GET['senha'];
+
+     * Só possivel resgatar valores no get, quando o no index o name for chamado. name="email" name="senha"					|
+																		|
+     * O metodo GET mostra os valores passados na Url, no nosso caso não é a melhor opção, por isso iremos utilizar o Method POST		|
+------------------------------------------------------------------------------------------------------------------------------------------------
+4 - Adicionar o method="post" no form, para que os parametros sejam passados utilizando este metodo.
+5 - No arquivo de validação utilizaremos uma logica para verificar se o usuário pode ou não utilizar o site
+(Lógica para verificar os valores do metodo post)
+	print_r($_POST);																
+    	echo $_POST['email'];															
+    	echo $_POST['senha'];	
+________________________________________________________________________________________________________________________________________________________________________													
+
+2° Etapa - Autentificação
+
+6 - Para criar um sistema de autentificação iremos criar um  banco de usuarios do sistemas (já que ainda não trabalhamos com MySql)
+
+	$usuarios_app = array(
+        array('email' => 'brunobromo321@gmail', 'senha' => 'Xxbrun@xx1'),
+        array('email' => 'a@teste.com', 'senha' => '123'),
+        array('email' => '@teste.com', 'senha' => '126'),
+    );	
+
+7 - Para validar o usuário, iremos comparar o dado que quer entrar no sistema com os dados já registrados no sistema.
+    * Primeiro criaremos uma variavel para false e true, com intuito de verificar se os dados escritos são corretos. Esta variavel tera um valor booleano false, já que
+      tem que ser verdadeira para que a autetificação seja concluida.
+
+	$usuario_autentificado = false;
+
+8 - Em seguida, será criada um lógica para comparar o valor digitado com o banco. 
+
+	foreach($usuarios_app as $user) {   ----> " utilizamos o foreach para separar todos os arrays e verificar um por um."
+       
+        if($user['email'] == $_POST['email'] && $user['senha'] == $_POST['senha']){
+            $usuario_autenticado = true;
+        }
+
+    }
+    if($usuario_autenticado) {
+       echo 'Usuário autenticado';
+    }else {
+       echo 'Erro na autenticação do usuário';
+    } 	
+
+9 - Se for false, a pagina é redirecionada para outra e nessa etapa é realizar o processo com o retorno na msm pagina, index, com um aviso de 'erro no login ou na 
+senha'.
+
+    if($usuario_autenticado) {
+        echo 'Usuário autenticado';
+    }else {
+     	header('Location: index.php?login=erro');
+    }
+
+    * Quando acontecer o Erro irá 'atualizar a página' e aparecer um aviso no Url como metodo GET(login=erro), assim para ajustar esse erro para que fique facil de ser
+      lido pelos clientes iremos modificar o resultado.
+
+    * O login=erro é um retono para a variavel $_GET
+
+10 - Para adicionar a mensagem na no site index.php, iremos criar um codigo php antes do botão
+
+	<?php if(isset($_get'login')) && $_get['login'] == 'erro') { ?>
+		<div class = "text danger">
+		   Usuário ou senha inválido(s)
+		</div>
+	<?php } ?>
+____________________________________________________________________________________________________________________________________________________________________________
+3° SESSION
+
+11 - Session é uma variavel que se conecta com todas as paginas instanciadas por um navegador, ou seja quando feita um variavel e dado seu valor, em todas as paginas 
+essa variavel será valida.
+
+    * Os Coockies do navegador fazem o papel de guardar as informações como se fosse um cache.
+
+    * A principal funcionalidade é fazer com que o usuário não deslogue toda vez que sai da pagina, o carrinho de compra não esvaziar toda vez que F5 for usado. 
+	
+    * Para entender melhor foi realizado uma logica:
+
+    session_start(); -->(Sempre iniciar a sessão)
+
+    $_SESSION['x'] = 'Oi, Sou um valor da sessão';
+    print_r($_SESSION);
+    echo '<hr />';
+	
+    Colocando valores na variavel $_SESSION['x'] podemos resgatar em qualquer uma pagina do site.
+
+12 - Na logica de autentificação iremos adicionar uma SESSION com o intuito de criar uma logica para autorizar a entrada das outras paginas.
+
+	if($usuario_autenticado) {
+        echo 'Usuário autenticado';
+        $_SESSION['autenticado'] = 'SIM';
+    }else {
+        $_SESSION['autenticado'] = 'NAO';
+        header('Location: index.php?login=erro');
+
+13 - Colocar em todos as paginas de código, um logica para que se não existir autentificação ou for != de sim, então a pagina sera bloqueada
+
+<?php 
+  session_start();
+  if(!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] != 'SIM'){
+    header('Location: index.php?login=erro2');
+    }
+?>
+	
+14 - Se no caso de a autentificação for negada e as paginas não forem acessadas, será disparado um alerta para que o usuario faça o cadastro corretamente.
+
+<?php 
+
+	if(isset($_GET['login']) and $_GET['login'] == 'erro2') { ?>
+	<div class ="text-danger">
+	   Faça login antes de acessar as páginas protegidas.
+	</div>
+
+<?php } ?>
+
+
+________________________________________________________________________________________________________________________________________________________________________
+4° include, include_once , require e require_once
+
+a função do include é fazer com que o script não seja repetido sem necessidade.
+
+Um exemplo deste aplicação é a barra de navegação, queremos que ela esteja em todos os script:
+____________________________________
+>menu.php			    |
+				    |
+Home | Menu | Contato | Sobre nós   |
+____________________________________|
+
+Nos arquivos Home, Menu, Contato e Sobre nós antes do Html, no lugar onde iria os scripts da barra de navegação iremos
+incluir o include
+
+____________________________________
+>home.php			    |
+                                    |
+<?php                               |
+	include("menu.php");        |
+?>	                            |
+             		            |
+Html e css do home             	    |
+____________________________________|
+
+A diferença entre include e require é que se algum erro acontecer no menu.php somente a barra de navegação ficará com erro
+e enquando no require o site inteiro entra em fatal error
+_______________________________________________________________________________________________________________________________________________________________________
+
+5° Logoff(Sair)
+
+* criar um bootstrap para o botão de sair no site
+* criar um arquivo php para a logica do logoff
+
+Existem 2 formas para apagar os dados contidos nos arrays
+
+UNSET e SESSION_DESTROY
+
+-> UNSET apaga os arrays um por vez por exemplo
+
+$_SESSION['x'] = 'sim'
+$_SESSION['a'] = 'não'
+$_SESSION['B'] = 'talvez'
+
+UNSET($_SESSION['X']);
+
+O array 'sim' não existirá mais
+
+SESSION_DESTROY();
+
+_______________________________________________________________________________________________________________________________________________________________________
+
+6° Registrando chamados
+
+FOPEN
+15 - criar um method no Form para que os dados sejam enviados
+16 - criar um action para receber as informações dos dados requisitados
+17 - incluir names no imput do codigo
+18 - Ao registrar as informações no codigo, iremos obter a resposta do abrir_chamado.
+19 - Para realizar a abertura de arquivo utilizaremos o fopen ('', '');
+
+FWRITE // FCLOSE
+20 - Para ler o arquivo utilizaremos o FWRITE($fopen, $texto) com 2 parametros
+21 - Criar uma variavel para o FOPEN -> $arquivo = fopen
+22 - o segundo parametro é a variavel dos textos escritos
+23 - para fechar o comando utilizando o FCLOSE($arquivo)
+
+LER O ARQUIVO (CONSULTAR CHAMADO)
+
+24 - Utilizar o FOPEN (..., 'r') -> r é de read, todos os parametros estão na documentação do php
+25 - criar uma variavel para ser utilizada posteriormente 
+
+<?php $arquivo = fopen('arquivo.txt','r'); ?>
+
+26 - para que todos os chamados sejam lidos, iremos utilizar um estrutura de repetição
+while(!feof($arquivo)) {
+  fgets($arquivo);
+}
+fclose($arquivo);
+27 - FEOF - End Of File - Para percorrer todas as linhas de codigos do arquivo
+   - FGETS - Ele lê os dados de uma linha e manda a informação
+   - ! - negação, FEOF sempre irá retornar false para as linha existentes, por isso iremos usar o !
+28 - Agora vamos separar as informações para retornar na tela do consultar_chamado
